@@ -71,12 +71,12 @@ class AuthorizeController implements AuthorizeControllerInterface
         // If no redirect_uri is passed in the request, use client's registered one
         if (empty($this->redirect_uri)) {
             $clientData              = $this->clientStorage->getClientDetails($this->client_id);
-            $registered_redirect_uri = $clientData['redirect_uri'];
+            $registered_redirect_uri = (array)$clientData['redirect_uri'];
         }
 
         // the user declined access to the client's application
         if ($is_authorized === false) {
-            $redirect_uri = $this->redirect_uri ?: $registered_redirect_uri;
+            $redirect_uri = $this->redirect_uri ?: array_pop($registered_redirect_uri);
             $this->setNotAuthorizedResponse($request, $response, $redirect_uri, $user_id);
 
             return;
@@ -92,7 +92,7 @@ class AuthorizeController implements AuthorizeControllerInterface
         list($redirect_uri, $uri_params) = $authResult;
 
         if (empty($redirect_uri) && !empty($registered_redirect_uri)) {
-            $redirect_uri = $registered_redirect_uri;
+            $redirect_uri = array_pop($registered_redirect_uri);
         }
 
         $uri = $this->buildUri($redirect_uri, $uri_params);
@@ -143,7 +143,7 @@ class AuthorizeController implements AuthorizeControllerInterface
             return false;
         }
 
-        $registered_redirect_uri = isset($clientData['redirect_uri']) ? $clientData['redirect_uri'] : '';
+        $registered_redirect_uri = (array)(isset($clientData['redirect_uri']) ? $clientData['redirect_uri'] : '');
 
         // Make sure a valid redirect_uri was supplied. If specified, it must match the clientData URI.
         // @see http://tools.ietf.org/html/rfc6749#section-3.1.2
@@ -159,7 +159,7 @@ class AuthorizeController implements AuthorizeControllerInterface
             }
 
             // validate against the registered redirect uri(s) if available
-            if ($registered_redirect_uri && !$this->validateRedirectUri($supplied_redirect_uri, $registered_redirect_uri)) {
+            if (!empty($registered_redirect_uri) && !$this->validateRedirectUri($supplied_redirect_uri, $registered_redirect_uri)) {
                 $response->setError(400, 'redirect_uri_mismatch', 'The redirect URI provided is missing or does not match', '#section-3.1.2');
 
                 return false;
@@ -167,18 +167,18 @@ class AuthorizeController implements AuthorizeControllerInterface
             $redirect_uri = $supplied_redirect_uri;
         } else {
             // use the registered redirect_uri if none has been supplied, if possible
-            if (!$registered_redirect_uri) {
+            if (empty($registered_redirect_uri)) {
                 $response->setError(400, 'invalid_uri', 'No redirect URI was supplied or stored');
 
                 return false;
             }
 
-            if (count(explode(' ', $registered_redirect_uri)) > 1) {
+            if (count($registered_redirect_uri) > 1) {
                 $response->setError(400, 'invalid_uri', 'A redirect URI must be supplied when multiple redirect URIs are registered', '#section-3.1.2.3');
 
                 return false;
             }
-            $redirect_uri = $registered_redirect_uri;
+            $redirect_uri = array_pop($registered_redirect_uri);
         }
 
         // Select the redirect URI
@@ -333,7 +333,7 @@ class AuthorizeController implements AuthorizeControllerInterface
             return false; // if either one is missing, assume INVALID
         }
 
-        $registered_uris = explode(' ', $registeredUriString);
+        $registered_uris = (array)$registeredUriString;
         foreach ($registered_uris as $registered_uri) {
             if ($this->config['require_exact_redirect_uri']) {
                 // the input uri is validated against the registered uri using exact match

@@ -1,17 +1,17 @@
 {
-    "name": "bshaffer/oauth2-server-php",
+    "name": "mondor/oauth2-server-php",
     "description":"OAuth2 Server for PHP",
     "keywords":["oauth","oauth2","auth"],
     "type":"library",
     "license":"MIT",
     "authors":[
         {
-            "name":"Brent Shaffer",
-            "email": "bshafs@gmail.com",
-            "homepage":"http://brentertainment.com"
+            "name":"mondor",
+            "email": "mon.dor.dor@gmail.com",
+            "homepage":""
         }
     ],
-    "homepage": "http://github.com/bshaffer/oauth2-server-php",
+    "homepage": "http://github.com/mondor/oauth2-server-php",
     "require":{
         "php":">=5.3.9"
     },
